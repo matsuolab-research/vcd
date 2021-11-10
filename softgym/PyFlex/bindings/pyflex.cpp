@@ -1094,6 +1094,21 @@ py::array_t<int> pyflex_render(int capture, char *path) {
     return rendered_img;
 }
 
+py::array_t<int> pyflex_get_spring_indices() {
+    g_buffers->springIndices.map();
+
+    auto springIndices = py::array_t<int>((size_t) g_buffers->springIndices.size());
+    auto ptr = (int *) springIndices.request().ptr;
+
+    for (size_t i = 0; i < (size_t) g_buffers->springIndices.size(); i++) {
+        ptr[i] = g_buffers->springIndices[i];
+    }
+
+    g_buffers->springIndices.unmap();
+
+    return springIndices;
+}
+
 
 PYBIND11_MODULE(pyflex, m) {
     m.def("main", &main);
@@ -1159,5 +1174,7 @@ PYBIND11_MODULE(pyflex, m) {
 
     m.def("add_rigid_body", &pyflex_add_rigid_body);
     m.def("set_shape_color", &pyflex_set_shape_color, "Set the color of the shape");
+
+    m.def("get_spring_indices", &pyflex_get_spring_indices);
 }
 
