@@ -44,11 +44,11 @@ class MakePickPlace:
         env_kwargs['headless'] = True #args.headless
         env_kwargs['num_picker'] = 1
 
-
         if not env_kwargs['use_cached_states']:
             print('Waiting to generate environment variations. May take 1 minute for each variation...')
-        self.env = normalize(SOFTGYM_ENVS[args.env_name](**env_kwargs))
+        self.env = normalize(SOFTGYM_ENVS[args.env_name](**env_kwargs))        
         self.env.reset(set_picker_highest_point=True)
+
         self.args = args
         self.env_kwargs = env_kwargs
 

@@ -58,7 +58,7 @@ env_arg_dict = {
                           'num_variations': 1000,
                           'use_cached_states': True,
                           'deterministic': False},
-    'ClothFlatten': {'observation_mode': 'cam_rgb',
+    'ClothFlatten': {'observation_mode': 'point_cloud',
                      'action_mode': 'picker',
                      'num_picker': 2,
                      'render': True,

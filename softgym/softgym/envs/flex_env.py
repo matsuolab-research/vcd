@@ -150,7 +150,7 @@ class FlexEnv(gym.Env):
             save_numpy_as_gif(np.array(self.video_frames), video_path, **kwargs)
         del self.video_frames
 
-    def reset(self, config=None, initial_state=None, config_id=None):
+    def reset(self, set_picker_highest_point=False, config=None, initial_state=None, config_id=None):
         if config is None:
             if config_id is None:
                 if self.eval_flag:
@@ -169,7 +169,10 @@ class FlexEnv(gym.Env):
         self.particle_num = pyflex.get_n_particles()
         self.prev_reward = 0.
         self.time_step = 0
-        obs = self._reset()
+        if set_picker_highest_point:
+            obs = self._reset(set_picker_highest_point)
+        else:
+            obs = self._reset()
         if self.recording:
             self.video_frames.append(self.render(mode='rgb_array'))
         return obs
