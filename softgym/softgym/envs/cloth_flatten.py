@@ -107,13 +107,20 @@ class ClothFlattenEnv(ClothEnv):
         pyflex.set_positions(new_pos.flatten())
         return self._get_current_covered_area(new_pos)
 
-    def _reset(self):
+    def _reset(self, set_picker_highest_position=False):
         """ Right now only use one initial state"""
         self.prev_covered_area = self._get_current_covered_area(pyflex.get_positions())
         if hasattr(self, 'action_tool'):
             curr_pos = pyflex.get_positions()
             cx, cy = self._get_center_point(curr_pos)
-            self.action_tool.reset([cx, 0.2, cy])
+            if set_picker_highest_position:
+                curr_pos = np.delete(np.reshape(curr_pos, [-1, 4]), 3, 1)
+                ord = np.argsort(curr_pos[:,1])[::-1]
+                sorted_pos = curr_pos[ord]
+                print(sorted_pos[0])
+                self.action_tool.reset(sorted_pos[0])
+            else:
+                self.action_tool.reset([cx, 0.5, cy])
         pyflex.step()
         self.init_covered_area = None
         info = self._get_info()
