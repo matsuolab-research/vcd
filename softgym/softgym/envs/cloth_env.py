@@ -55,7 +55,7 @@ class ClothEnv(FlexEnv):
                                          dtype=np.float32)
 
     def _sample_cloth_size(self):
-        return np.random.randint(60, 120), np.random.randint(60, 120)
+        return np.random.randint(40, 45), np.random.randint(40, 45)
 
     def _get_flat_pos(self):
         config = self.get_current_config()
