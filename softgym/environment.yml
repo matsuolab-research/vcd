@@ -20,3 +20,4 @@ dependencies:
     - Shapely==1.6.4.post2
     - pyquaternion==0.9.5 
     - sk-video==1.1.10
+    - open3d

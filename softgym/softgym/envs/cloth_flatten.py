@@ -134,6 +134,18 @@ class ClothFlattenEnv(ClothEnv):
             pyflex.step()
         return
 
+    def _set_action_tool_random_high(self, downsampled_pc, positions, matching_index):
+        print("downsampled_pc num is")
+        print(len(downsampled_pc))
+        print("grasp point is")
+        print(positions[matching_index[random.randint(0,len(downsampled_pc))]])
+        gp = positions[matching_index[random.randint(0,len(downsampled_pc))]]
+        # gp[1] /= 10
+        # self.action_tool.reset([0,0.01,0])
+        self.action_tool.reset(gp)
+        pyflex.step()
+
+
     def _get_current_covered_area(self, pos):
         """
         Calculate the covered area by taking max x,y cood and min x,y coord, create a discritized grid between the points
