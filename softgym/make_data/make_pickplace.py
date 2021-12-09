@@ -358,6 +358,6 @@ if __name__ == '__main__':
     if not os.path.exists(dir):
         os.mkdir(dir)
         
-    for i in range(0, 2000):
+    for i in range(0, 2050):
         mp = MakePickPlace(i)
         mp.process()
