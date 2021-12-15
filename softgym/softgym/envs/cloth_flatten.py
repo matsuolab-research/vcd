@@ -113,13 +113,16 @@ class ClothFlattenEnv(ClothEnv):
         if hasattr(self, 'action_tool'):
             curr_pos = pyflex.get_positions()
             cx, cy = self._get_center_point(curr_pos)
+            print(cx)
+            print(cy)
+            print("cx, cy")
             if set_picker_highest_point:
                 curr_pos = np.delete(np.reshape(curr_pos, [-1, 4]), 3, 1)
                 ord = np.argsort(curr_pos[:,1])[::-1]
                 sorted_pos = curr_pos[ord]
                 self.action_tool.reset(sorted_pos[0])
             else:
-                self.action_tool.reset([cx, 0.5, cy])
+                self.action_tool.reset_notusedgripper([-0.1,-0.1,-0.1])
         pyflex.step()
         self.init_covered_area = None
         info = self._get_info()
@@ -128,6 +131,7 @@ class ClothFlattenEnv(ClothEnv):
 
     def _step(self, action):
         self.action_tool.step(action)
+        self.action_tool.update_picker_boundary([-10, 0, -10], [10, 10, 10])
         if self.action_mode in ['sawyer', 'franka']:
             pyflex.step(self.action_tool.next_action)
         else:
@@ -138,8 +142,9 @@ class ClothFlattenEnv(ClothEnv):
         print("downsampled_pc num is")
         print(len(downsampled_pc))
         print("grasp point is")
-        print(positions[matching_index[random.randint(0,len(downsampled_pc))]])
-        gp = positions[matching_index[random.randint(0,len(downsampled_pc))]]
+        print(positions[matching_index[random.randint(0,len(downsampled_pc)-1)]])
+        gp = positions[matching_index[random.randint(0,len(downsampled_pc)-1)]]
+        print(gp)
         # gp[1] /= 10
         # self.action_tool.reset([0,0.01,0])
         self.action_tool.reset(gp)

@@ -27,7 +27,7 @@ class MakePickPlace:
         parser.add_argument('--num_variations', type=int, default=1, help='Number of environment variations to be generated')
         parser.add_argument('--save_video_dir', type=str, default='./data/', help='Path to the saved video')
         parser.add_argument('--img_size', type=int, default=256, help='Size of the recorded videos')
-        parser.add_argument('--num_depth', type=int, default=7, help='Number of depth of bfs')
+        parser.add_argument('--num_depth', type=int, default=3, help='Number of depth of bfs')
         parser.add_argument('--threshold_r', type=int, default=0.045, help='R threshold')
         parser.add_argument('--grid_param', type=int, default=100, help='change grid size')
 
@@ -40,7 +40,7 @@ class MakePickPlace:
         env_kwargs['use_cached_states'] = False
         env_kwargs['save_cached_states'] = False
         env_kwargs['num_variations'] = args.num_variations
-        env_kwargs['render'] = True
+        env_kwargs['render'] = False#True
         env_kwargs['headless'] = True #args.headless
         env_kwargs['num_picker'] = 1
 
@@ -99,13 +99,11 @@ class MakePickPlace:
         action[1] = 0
         action[2] = 0
         action[3] = 0
-        self.obs, _, _, _ = self.env.step(action, record_continuous_video=True, img_size=self.img_size)
+        self.obs, _, _, _ = self.env.step(action)#, record_continuous_video=True, img_size=self.img_size)
 
         pos = pyflex.get_positions()
         self.positions = np.delete(np.reshape(pos, [-1, 4]), 3, 1)
         self.past_positions = copy.deepcopy(self.positions)
-        print("selfPsize")
-        print(self.positions.shape[0])
 
         # prepare downsampled point cloud from obs
         self.downsample_point_cloud()
@@ -116,7 +114,6 @@ class MakePickPlace:
         print("bipartite matching done")
 
 
-        self.env.set_action_tool_random_high(self.downpcd_np,self.positions, self.matching_index)
 
         
 
@@ -147,14 +144,13 @@ class MakePickPlace:
                         edge_connect.append(1)
                     else:
                         edge_connect.append(0)
-        print("self num is " + str(self.num))
-        if not os.path.exists('examples/pickplacefinal'):
-            os.makedirs('examples/pickplacefinal')
-        pass_w = 'examples/pickplacefinal/ppdata' + str(self.num) + '.txt'
-        print("a")
+        if not os.path.exists('examples/pickplace_data'):
+            os.makedirs('examples/pickplace_data')
+        pass_w = 'examples/pickplace_data/ppdata' + str(self.num) + '.txt'
 
 
-        frames = [self.env.get_image(self.img_size, self.img_size)]
+
+        # frames = [self.env.get_image(self.img_size, self.img_size)]
         with open(pass_w, 'w') as f:
             f.write(str(self.num_downpcd) + ' ' + str(num_edges) + '\n')
             for i in range(num_edges):
@@ -171,20 +167,15 @@ class MakePickPlace:
             step_size_z = random.uniform(-0.5, 0.5)
             step_size_dist = random.uniform(0.15, 0.4)
 
-            for i in range(5):
+            for i in range(1):
                 action = self.env.action_space.sample()
                 action[0] = 0
-                action[1] = 0.2
+                action[1] = 0
                 action[2] = 0
-                move_dist = 0.3
-                alpha = move_dist/math.sqrt(action[0]**2 + action[1]**2 + action[2]**2)
-                # print("alpha is " + str(alpha) )
-                action[0] *= alpha
-                action[1] *= alpha
-                action[2] *= alpha
-                action[3] = 1
-                obs, _, _, info = self.env.step(action, record_continuous_video=True, img_size=self.img_size)
-                frames.extend(info['flex_env_recorded_frames'])
+                action[3] = 0
+                self.obs, _, _, info = self.env.step(action)#, record_continuous_video=True, img_size=self.img_size)
+
+                # frames.extend(info['flex_env_recorded_frames'])
                 pos = pyflex.get_positions()
                 self.positions = np.delete(np.reshape(pos, [-1, 4]), 3, 1)
                 for j in range(self.num_downpcd):
@@ -193,10 +184,15 @@ class MakePickPlace:
                         is_picked[0] = 1
                     else:
                         is_picked[1] = 1
-                    f.write(str(self.positions[self.matching_index[j]][0]*1000)[:14]+' '
-                            +str(self.positions[self.matching_index[j]][1]*1000)[:14]+' '
-                            +str(self.positions[self.matching_index[j]][2]*1000)[:14]+' '
-                            +str(is_picked[0])+' '+str(is_picked[1])+'\n')
+                    # f.write(str(self.positions[self.matching_index[j]][0]*1000)[:14]+' '
+                    #         +str(self.positions[self.matching_index[j]][1]*1000)[:14]+' '
+                    #         +str(self.positions[self.matching_index[j]][2]*1000)[:14]+' '
+                    #         +str(is_picked[0])+' '+str(is_picked[1])+'\n')
+
+
+
+            self.env.set_action_tool_random_high(self.downpcd_np, self.positions, self.matching_index)
+
 
             for i in range(60):
                 action = self.env.action_space.sample()
@@ -205,25 +201,30 @@ class MakePickPlace:
                 action[2] = step_size_z
                 move_dist = step_size_dist
                 alpha = move_dist/math.sqrt(action[0]**2 + action[1]**2 + action[2]**2)
-                # print("alpha is " + str(alpha) )
+
                 action[0] *= alpha
                 action[1] *= alpha
                 action[2] *= alpha 
                 action[3] = 1
-                obs, _, _, info = self.env.step(action, record_continuous_video=True, img_size=self.img_size)
-                frames.extend(info['flex_env_recorded_frames'])
+                obs, _, _, info = self.env.step(action)#, record_continuous_video=True, img_size=self.img_size)
+                # frames.extend(info['flex_env_recorded_frames'])
                 pos = pyflex.get_positions()
+                vel = pyflex.get_velocities()
                 self.positions = np.delete(np.reshape(pos, [-1, 4]), 3, 1)
+                self.velocities = np.reshape(vel, [-1, 3])
                 for j in range(self.num_downpcd):
                     is_picked = [0, 0]
                     if j == picked_index:
                         is_picked[0] = 1
                     else:
                         is_picked[1] = 1
-                    f.write(str(self.positions[self.matching_index[j]][0]*1000)[:14]+' '
-                            +str(self.positions[self.matching_index[j]][1]*1000)[:14]+' '
-                            +str(self.positions[self.matching_index[j]][2]*1000)[:14]+' '
-                            +str(is_picked[0])+' '+str(is_picked[1])+'\n')
+                    f.write(str(self.positions[self.matching_index[j]][0])[:14] + ' '
+                            + str(self.positions[self.matching_index[j]][1])[:14] + ' '
+                            + str(self.positions[self.matching_index[j]][2])[:14] + ' '
+                            + str(self.velocities[self.matching_index[j]][0])[:14] + ' '
+                            + str(self.velocities[self.matching_index[j]][1])[:14] + ' '
+                            + str(self.velocities[self.matching_index[j]][2])[:14] + ' '
+                            + str(is_picked[0]) + ' ' + str(is_picked[1]) + '\n')
             for i in range(40):
                 action = self.env.action_space.sample()
                 action[0] = 0
@@ -235,24 +236,29 @@ class MakePickPlace:
                 action[1] *= alpha
                 action[2] *= alpha
                 action[3] = 0
-                obs, _, _, info = self.env.step(action, record_continuous_video=True, img_size=self.img_size)
-                frames.extend(info['flex_env_recorded_frames'])
+                obs, _, _, info = self.env.step(action)#, record_continuous_video=True, img_size=self.img_size)
+                # frames.extend(info['flex_env_recorded_frames'])
                 pos = pyflex.get_positions()
+                vel = pyflex.get_velocities()
                 self.positions = np.delete(np.reshape(pos, [-1, 4]), 3, 1)
+                self.velocities = np.reshape(vel, [-1, 3])
                 for j in range(self.num_downpcd):
                     is_picked = [0, 1]
-                    f.write(str(self.positions[self.matching_index[j]][0]*1000)[:14]+' '
-                            +str(self.positions[self.matching_index[j]][1]*1000)[:14]+' '
-                            +str(self.positions[self.matching_index[j]][2]*1000)[:14]+' '
-                            +str(is_picked[0])+' '+str(is_picked[1])+'\n')
+                    f.write(str(self.positions[self.matching_index[j]][0])[:14] + ' '
+                            + str(self.positions[self.matching_index[j]][1])[:14] + ' '
+                            + str(self.positions[self.matching_index[j]][2])[:14] + ' '
+                            + str(self.velocities[self.matching_index[j]][0])[:14] + ' '
+                            + str(self.velocities[self.matching_index[j]][1])[:14] + ' '
+                            + str(self.velocities[self.matching_index[j]][2])[:14] + ' '
+                            + str(is_picked[0]) + ' ' + str(is_picked[1]) + '\n')
 
-        self.save_video_dir = "./data/"
-        if not osp.exists(self.save_video_dir):
-            os.makedirs('data')
-        if self.save_video_dir is not None:
-            save_name = osp.join(self.save_video_dir, 'make_data_random-highest.gif')
-            save_numpy_as_gif(np.array(frames), save_name, fps=20)
-            print('Video generated and save to {}'.format(save_name))
+        # self.save_video_dir = "./data/"
+        # if not osp.exists(self.save_video_dir):
+        #     os.makedirs('data')
+        # if self.save_video_dir is not None:
+        #     save_name = osp.join(self.save_video_dir, 'make_data_random-highest.gif')
+        #     save_numpy_as_gif(np.array(frames), save_name, fps=20)
+        #     print('Video generated and save to {}'.format(save_name))
 
 
     def make_graph(self):
@@ -283,12 +289,8 @@ class MakePickPlace:
     
     def downsample_point_cloud(self):
         # prepare downsampled point cloud from obs
-        print("positions and obs num")
-        print(self.positions.shape[0])
-        print(self.obs.shape[0])
         self.reshaped_obs = np.reshape(self.obs, [-1, 3])
-        print(self.obs.shape)
-        print(self.reshaped_obs.shape)
+
         min_x = 1000*self.grid_param
         max_x = -1000*self.grid_param
         min_y = 1000*self.grid_param
@@ -329,35 +331,27 @@ class MakePickPlace:
 
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(self.pcd_np)
-        v_size = 0.0216*1.44375
+        v_size = 0.0216#*1.44375
         self.downpcd = pcd.voxel_down_sample(voxel_size=v_size)#(voxel_size=0.035)
         self.downpcd_np = np.asarray(self.downpcd.points)
         self.num_downpcd = self.downpcd_np.shape[0]
         # o3d.visualization.draw_geometries([self.downpcd])
-        # print("down pcd size is ")
-        # print(self.num_downpcd)
+
 
     def bipartite_matching(self):
         # do bipartite matching?
         # maybe this is enough
-        print("self.positions")
-        print(self.positions.shape[0])
-        print(self.positions)
+
         self.matching_index = [None for i in range(self.num_downpcd)]
         for i in range(self.num_downpcd):
             lis = []
             
             for j in range(self.nodes):
                 lis.append((np.linalg.norm(self.downpcd_np[i] - self.positions[j]), j))
-                # print("dist is ")
-                # print(i)
-                # print(j)
-                # print(np.linalg.norm(self.downpcd_np[i] - self.positions[j]))
+
             lis.sort(key=lambda x: x[0])
-            # print(lis)
             self.matching_index[i] = lis[0][1]
-            # print(lis[0])
-        # print(lis)
+
         return
 
 
@@ -396,7 +390,7 @@ class MakePickPlace:
         pos = np.reshape(pos, [-1, 4])
 
         point_list = [self.matching_index[i] for i in range(self.num_downpcd)]
-        print(len(point_list))
+
 
         scax = []
         scay = []
@@ -419,6 +413,6 @@ class MakePickPlace:
         return null
 
 if __name__ == '__main__':
-    for i in range(1, 2000):
+    for i in range(1052, 2000):
         mp = MakePickPlace(i)
         mp.process()
