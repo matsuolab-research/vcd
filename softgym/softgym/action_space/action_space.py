@@ -21,7 +21,7 @@ class ActionToolBase(metaclass=abc.ABCMeta):
 
 class Picker(ActionToolBase):
     def __init__(self, num_picker=1, picker_radius=0.05, init_pos=(0., -0.1, 0.), picker_threshold=0.005, particle_radius=0.05,
-                 picker_low=(-0.4, 0., -0.4), picker_high=(0.4, 0.5, 0.4), init_particle_pos=None, spring_coef=1.2, **kwargs):
+                 picker_low=(-0.9, 0., -0.9), picker_high=(0.9, 0.5, 0.9), init_particle_pos=None, spring_coef=1.2, **kwargs):
         """
 
         :param gripper_type:
@@ -75,15 +75,49 @@ class Picker(ActionToolBase):
             self.picker_low[i] += offset
             self.picker_high[i] += offset
         init_picker_poses = self._get_centered_picker_pos(center)
-
+        count = 0
         for picker_pos in init_picker_poses:
+            if count == 0:
+                pyflex.add_sphere(self.picker_radius, [-100,-100,-100], [1, 0, 0, 0])
+                count = 1
+                continue
+
             pyflex.add_sphere(self.picker_radius, picker_pos, [1, 0, 0, 0])
+            print("pos2")
+
+            print(picker_pos)
         pos = pyflex.get_shape_states()  # Need to call this to update the shape collision
         pyflex.set_shape_states(pos)
 
         self.picked_particles = [None] * self.num_picker
         shape_state = np.array(pyflex.get_shape_states()).reshape(-1, 14)
         centered_picker_pos = self._get_centered_picker_pos(center)
+        for (i, centered_picker_pos) in enumerate(centered_picker_pos):
+            shape_state[i] = np.hstack([centered_picker_pos, centered_picker_pos, [1, 0, 0, 0], [1, 0, 0, 0]])
+        pyflex.set_shape_states(shape_state)
+        # pyflex.step() # Remove this as having an additional step here may affect the cloth drop env
+        self.particle_inv_mass = pyflex.get_positions().reshape(-1, 4)[:, 3]
+        # print('inv_mass_shape after reset:', self.particle_inv_mass.shape)
+
+    def reset_notusedgripper(self, center):
+        for i in (0, 2):
+            offset = center[i]
+        init_picker_poses = [-1000,-1000, -1000]#self._get_centered_picker_pos(center*1000)
+
+        # for picker_pos in init_picker_poses:
+        # print(picker_pos)
+        # print("picker_pos")
+        pyflex.add_sphere(self.picker_radius, init_picker_poses, [1, 0, 0, 0])
+        pos = pyflex.get_shape_states()  # Need to call this to update the shape collision
+        pyflex.set_shape_states(pos)
+        print(pos)
+        print("pos")
+
+        self.picked_particles = [None] * self.num_picker
+        shape_state = np.array(pyflex.get_shape_states()).reshape(-1, 14)
+        centered_picker_pos = self._get_centered_picker_pos(init_picker_poses)
+        print("centered_picker_pos")
+        print(centered_picker_pos)
         for (i, centered_picker_pos) in enumerate(centered_picker_pos):
             shape_state[i] = np.hstack([centered_picker_pos, centered_picker_pos, [1, 0, 0, 0], [1, 0, 0, 0]])
         pyflex.set_shape_states(shape_state)

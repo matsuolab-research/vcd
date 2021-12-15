@@ -177,6 +177,9 @@ class FlexEnv(gym.Env):
             self.video_frames.append(self.render(mode='rgb_array'))
         return obs
 
+    def set_action_tool_random_high(self, downsampled_pc, positions, matching_index):
+        self._set_action_tool_random_high(downsampled_pc, positions, matching_index)
+
     def step(self, action, record_continuous_video=False, img_size=None):
         """ If record_continuous_video is set to True, will record an image for each sub-step"""
         frames = []

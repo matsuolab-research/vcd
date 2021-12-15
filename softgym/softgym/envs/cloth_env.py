@@ -8,7 +8,7 @@ from copy import deepcopy
 
 
 class ClothEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, num_picker=2, render_mode='particle', picker_radius=0.001, particle_radius=0.00625, **kwargs):
+    def __init__(self, observation_mode, action_mode, num_picker=2, render_mode='particle', picker_radius=0.0001, particle_radius=0.00625, **kwargs):
         self.render_mode = render_mode
         self.action_mode = action_mode
         self.cloth_particle_radius = particle_radius
@@ -25,7 +25,7 @@ class ClothEnv(FlexEnv):
             self.picker_radius = picker_radius
         elif action_mode == 'pickerpickplace':
             self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=particle_radius, env=self,
-                                               picker_low=(-0.5, 0., -0.5), picker_high=(0.5, 0.3, 0.5))
+                                               picker_low=(-2, 0., -2), picker_high=(2, 0.3, 2))
             self.action_space = self.action_tool.action_space
             assert self.action_repeat == 1
         elif action_mode in ['sawyer', 'franka']:
@@ -93,7 +93,8 @@ class ClothEnv(FlexEnv):
         if self.action_mode in ['sawyer', 'franka']:
             cam_pos, cam_angle = np.array([0.0, 1.62576, 1.04091]), np.array([0.0, -0.844739, 0])
         else:
-            cam_pos, cam_angle = np.array([-0.0, 0.82, 0.82]), np.array([0, -45 / 180. * np.pi, 0.])
+            # cam_pos, cam_angle = np.array([-0.0, 0.82, 0.82]), np.array([0, -45 / 180. * np.pi, 0.])
+            cam_pos, cam_angle = np.array([-0.0, 1.82, 1.82]), np.array([0, -45 / 180. * np.pi, 0.])
         config = {
             'ClothPos': [-1.6, 2.0, -0.8],
             'ClothSize': [int(0.6 / particle_radius), int(0.368 / particle_radius)],
